@@ -24,7 +24,6 @@ class Core(object):
 	def bubble_sort(self):
 
 		for i in range(len(self.nums) - 1):
-			# ============================SORTING_START============================
 
 			self.sorted = True
 			for j in range(len(self.nums) - 1 - i):
@@ -36,28 +35,13 @@ class Core(object):
 			if self.sorted:
 				break
 
-			# =============================SORTING_END=============================
-
-			for e in pg.event.get():
-				if e.type == pg.QUIT:
-					exit(0)
-
-			self.screen.blit(self.bg, (0, 0))
-
-			for i, num in enumerate(self.nums):
-				pg.draw.line(self.screen, WHITE, (i, WINDOW_H), (i, WINDOW_H - num))
-			text_rect = self.font.render('Iterations: ' + str(self.iterations), False, GREEN)
-			self.screen.blit(text_rect, (30, 30))
-
-			pg.display.update()
-			self.clock.tick(FPS)
+			self.render()
 
 		self.sorted = True
 
 	def coctail_shaker_sort(self):
 
 		for i in range(len(self.nums) // 2):
-			# ============================SORTING_START================================
 
 			self.sorted = True
 			for j in range(i + 1, len(self.nums) - i):
@@ -79,21 +63,7 @@ class Core(object):
 			if self.sorted:
 				break
 
-			# =============================SORTING_END================================
-
-			for e in pg.event.get():
-				if e.type == pg.QUIT:
-					exit(0)
-
-			self.screen.blit(self.bg, (0, 0))
-
-			for i, num in enumerate(self.nums):
-				pg.draw.line(self.screen, WHITE, (i, WINDOW_H), (i, WINDOW_H - num))
-			text_rect = self.font.render('Iterations: ' + str(self.iterations), False, GREEN)
-			self.screen.blit(text_rect, (30, 30))
-
-			pg.display.update()
-			self.clock.tick(FPS)
+			self.render()
 
 		self.sorted = True
 
@@ -118,6 +88,6 @@ class Core(object):
 		while self.running:
 
 			if not self.sorted and pg.time.get_ticks() > 2000:
-				self.coctail_shaker_sort()
+				self.bubble_sort()
 			else:
 				self.render()
