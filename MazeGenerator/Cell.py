@@ -1,6 +1,9 @@
 import pygame as pg
 
-from MazeGenerator.Const import *
+try:
+    from MazeGenerator.Const import *
+except ImportError:
+    from Const import *
 
 
 class Cell():

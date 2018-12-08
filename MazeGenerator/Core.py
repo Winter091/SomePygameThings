@@ -1,7 +1,11 @@
 import pygame as pg
 
-from MazeGenerator.Const import *
-from MazeGenerator.Cell import Cell
+try:
+    from MazeGenerator.Const import *
+    from MazeGenerator.Cell import Cell
+except ImportError:
+    from Const import *
+    from Cell import Cell
 
 from random import randint
 
@@ -24,6 +28,7 @@ class Core(object):
         self.current = self.grid[0]
 
         self.stack = []
+        self.finished = False
 
     def _init_objects(self):
         for j in range(C):
@@ -73,7 +78,8 @@ class Core(object):
         else:
             pass
 
-    def i(self, x, y):
+    @staticmethod
+    def i(x, y):
         if x < 0 or y < 0 or x > C - 1 or y > R - 1:
             return None
         return x + y * C
