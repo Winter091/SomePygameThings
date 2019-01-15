@@ -1,93 +1,148 @@
 import pygame as pg
+import noise
 
+from pygame.locals import *
 from sorting.Const import *
 from random import randint
 
 
 class Core(object):
-	def __init__(self):
-		pg.init()
-		pg.font.init()
-		self.running = True
-		self.screen = pg.display.set_mode((WINDOW_W, WINDOW_H))
+    def __init__(self):
+        pg.init()
+        pg.font.init()
+        self.running = True
+        self.screen = pg.display.set_mode((WINDOW_W, WINDOW_H))
 
-		self.bg = pg.Surface((WINDOW_W, WINDOW_H))
-		self.bg.fill(BLACK)
+        self.clock = pg.time.Clock()
+        self.font = pg.font.SysFont('Courier New', 16)
 
-		self.clock = pg.time.Clock()
-		self.font = pg.font.SysFont('Courier New', 16)
+        self.seed_increment = 0.005
+        self.octaves = 1
+        self.pers = 0.5
+        self.lac = 2
+        self.repeatx = 1024
+        self.repeaty = 1024
+        self.base = 0
 
-		self.nums = [randint(1, WINDOW_H) for _ in range(WINDOW_W)]
-		self.iterations = 0
-		self.sorted = False
+        self.text = [
+            'Octaves: ' + str(self.octaves),
+            'Pers: ' + str(self.pers),
+            'Lac: ' + str(self.lac),
+            'Repeat: ' + str(self.repeat),
+            'Base: ' + str(self.base)
+        ]
 
-	def bubble_sort(self):
+        self.generate_nums()
 
-		for i in range(len(self.nums) - 1):
+    def generate_nums(
+            self,
+            octaves=1,
+            pers=0.5,
+            lac=2,
+            repeatx=1024,
+            repeaty=1024,
+            base=0
+    ):
 
-			self.sorted = True
-			for j in range(len(self.nums) - 1 - i):
-				self.iterations += 1
-				if self.nums[j] > self.nums[j + 1]:
-					self.nums[j], self.nums[j + 1] = self.nums[j + 1], self.nums[j]
-					self.sorted = False
+        nums = [[0] * WINDOW_H] * WINDOW_W
+        x_seed = 0
+        y_seed = 0
 
-			if self.sorted:
-				break
+        for x in range(WINDOW_W):
+            x_seed += self.seed_increment
+            y_seed = 0
 
-			self.render()
+            for y in range(WINDOW_H):
+                y_seed += self.seed_increment
 
-		self.sorted = True
+                # -1 to 1
+                bright = noise.pnoise2(
+                        x_seed,
+                        y_seed,
+                        octaves=octaves,
+                        persistence=pers,
+                        lacunarity=lac,
+                        repeatx=repeatx,
+                        repeaty=repeaty,
+                        base=base
+                )
 
-	def coctail_shaker_sort(self):
+                # 0 to 255
+                bright = int((bright + 1) * 127.5)
 
-		for i in range(len(self.nums) // 2):
+                self.screen.set_at((x, y), (bright, bright, bright))
 
-			self.sorted = True
-			for j in range(i + 1, len(self.nums) - i):
-				self.iterations += 1
-				if self.nums[j] < self.nums[j - 1]:
-					self.nums[j], self.nums[j - 1] = self.nums[j - 1], self.nums[j]
-					self.sorted = False
+    def update_text(self):
+        self.text = [
+            'Octaves: ' + str(self.octaves),
+            'Pers: ' + str(self.pers),
+            'Lac: ' + str(self.lac),
+            'Repeatx: ' + str(self.repeatx),
+            'Base: ' + str(self.base)
+        ]
 
-			if self.sorted:
-				break
+    def update_keys(self):
+        for e in pg.event.get():
+            if e.type == pg.QUIT:
+                exit(0)
 
-			self.sorted = True
-			for j in range(len(self.nums) - i - 1, i, -1):
-				self.iterations += 1
-				if self.nums[j] < self.nums[j - 1]:
-					self.nums[j], self.nums[j - 1] = self.nums[j - 1], self.nums[j]
-					self.sorted = False
+            elif e.type == pg.KEYDOWN:
+                if e.key == K_RIGHT:
+                    self.seed += 0.5
+                elif e.key == K_LEFT:
+                    self.seed -= 0.5
 
-			if self.sorted:
-				break
+                elif e.key == K_q:
+                    self.octaves += 1
+                elif e.key == K_a:
+                    self.octaves -= 1
 
-			self.render()
+                elif e.key == K_w:
+                    self.pers += 0.5
+                elif e.key == K_s:
+                    self.pers -= 0.5
 
-		self.sorted = True
+                elif e.key == K_e:
+                    self.lac += 0.25
+                elif e.key == K_d:
+                    self.lac -= 0.25
 
-	def render(self):
-		for e in pg.event.get():
-			if e.type == pg.QUIT:
-				exit(0)
+                elif e.key == K_r:
+                    self.repeat *= 2
+                elif e.key == K_f:
+                    self.repeat //= 2
 
-		self.screen.blit(self.bg, (0, 0))
+                elif e.key == K_t:
+                    self.base += 1
+                elif e.key == K_g:
+                    self.base -= 1
 
-		for i, num in enumerate(self.nums):
-			color = GREEN if self.sorted else WHITE
-			pg.draw.line(self.screen, color, (i, WINDOW_H), (i, WINDOW_H - num))
+                self.nums = self.generate_nums(self.seed,
+                                               self.octaves,
+                                               self.pers,
+                                               self.lac,
+                                               self.repeat,
+                                               self.base)
 
-		text_rect = self.font.render('Iterations: ' + str(self.iterations), False, GREEN)
-		self.screen.blit(text_rect, (30, 30))
+    def render(self):
 
-		pg.display.update()
-		self.clock.tick(FPS)
+        # Lines ===============================================================
+        # for i, num in enumerate(self.nums):
+        #     color = WHITE
+        #     pg.draw.line(self.screen, color, (i, WINDOW_H), (i, WINDOW_H - num))
 
-	def main_loop(self):
-		while self.running:
+        # Text ================================================================
+        # x = 30
+        # for string in self.text:
+        #     text_rect = self.font.render(string, False, GREEN)
+        #     self.screen.blit(text_rect, (30, x))
+        #     x += 12
 
-			if not self.sorted and pg.time.get_ticks() > 2000:
-				self.bubble_sort()
-			else:
-				self.render()
+        pg.display.update()
+        self.clock.tick(FPS)
+
+    def main_loop(self):
+        while self.running:
+            self.update_keys()
+            self.update_text()
+            self.render()
