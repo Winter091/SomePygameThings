@@ -2,6 +2,7 @@ import pygame as pg
 import noise
 
 from pygame.locals import *
+from random import randint
 from Const import *
 
 
@@ -15,22 +16,26 @@ class Core(object):
         self.clock = pg.time.Clock()
         self.font = pg.font.SysFont('Courier New', 16)
 
+        self.x_seed = randint(-10000, 10000)
+        self.y_seed = randint(-10000, 10000)
         self.seed_increment = 0.005
-        self.octaves = 1
+        self.octaves = 7
         self.pers = 0.5
         self.lac = 2
         self.repeatx = 1024
         self.repeaty = 1024
         self.base = 0
 
-        self.generate_noise()
+        self.generate_noise(self.x_seed, self.y_seed)
 
         self.text = []
-        self.update_text()
+        # self.update_text()
 
     def generate_noise(
             self,
-            octaves=1,
+            x_seed,
+            y_seed,
+            octaves=7,
             pers=0.5,
             lac=2,
             repeatx=1024,
@@ -38,36 +43,33 @@ class Core(object):
             base=0
     ):
 
-        x_seed = 0
-        y_seed = 0
-
         for x in range(WINDOW_W):
             x_seed += self.seed_increment
-            y_seed = 0
+            yseed = y_seed
 
             for y in range(WINDOW_H):
-                y_seed += self.seed_increment
+                yseed += self.seed_increment
 
                 # -1 to 1
-                bright = noise.pnoise2(
+                height = noise.pnoise2(
                         x_seed,
-                        y_seed,
-                        octaves=octaves,
-                        persistence=pers,
-                        lacunarity=lac,
-                        repeatx=repeatx,
-                        repeaty=repeaty,
-                        base=base
+                        yseed,
+                        octaves,
+                        pers,
+                        lac,
+                        repeatx,
+                        repeaty,
+                        base
                 )
 
                 # 0 to 255
-                bright = int((bright + 1) * 127.5)
+                height = int((height + 1) * 127.5)
 
-                self.screen.set_at((x, y), (bright, bright, bright))
+                self.screen.set_at((x, y), self.get_color(height))
 
     def update_text(self):
         self.text = [
-            'Seed ++: ' + str(self.seed_increment),
+            'Seed: ' + str(self.x_seed) + ' ' + str(self.y_seed),
             'Octaves: ' + str(self.octaves),
             'Pers: ' + str(self.pers),
             'Lac: ' + str(self.lac),
@@ -113,9 +115,41 @@ class Core(object):
             self.base -= 1
 
         elif key == K_RIGHT:
-            self.seed_increment += 0.001
+            self.x_seed += 0.5
         elif key == K_LEFT:
-            self.seed_increment -= 0.001
+            self.x_seed -= 0.5
+        elif key == K_UP:
+            self.y_seed -= 0.5
+        elif key == K_DOWN:
+            self.y_seed += 0.5
+
+    def get_color(self, height):
+
+        # Dark blue
+        if height <= 100:
+            color = (0, 0, 100)
+
+        # Blue
+        elif 100 < height <= 115:
+            color = (0, 0, 255)
+
+        # Green
+        elif 115 < height <= 127:
+            color = (0, 129, 0)
+
+        # Dark yellow
+        elif 127 < height <= 140:
+            color = (128, 128, 0)
+
+        # Gray
+        elif 140 < height <= 160:
+            color = (160, 160, 160)
+
+        # White
+        elif 160 < height <= 255:
+            color = (225, 225, 225)
+
+        return color
 
     def update(self):
         for e in pg.event.get():
@@ -125,14 +159,16 @@ class Core(object):
             elif e.type == pg.KEYDOWN:
                 self.change_parameter(e.key)
                 self.generate_noise(
-                        octaves=self.octaves,
-                        pers=self.pers,
-                        lac=self.lac,
-                        repeatx=self.repeatx,
-                        repeaty=self.repeaty,
-                        base=self.base
+                        self.x_seed,
+                        self.y_seed,
+                        self.octaves,
+                        self.pers,
+                        self.lac,
+                        self.repeatx,
+                        self.repeaty,
+                        self.base
                 )
-                self.update_text()
+                # self.update_text()
 
     def render(self):
         pg.display.update()
